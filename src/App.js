@@ -71,7 +71,8 @@ const ChartGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [chartWidth, setChartWidth] = useState(700);
   const [chartHeight, setChartHeight] = useState(400);
-  const [limitChartRows, setLimitChartRows] = useState(true); // NEW: toggle for row limit
+  const [limitChartRows, setLimitChartRows] = useState(true);
+  const [showAllTableRows, setShowAllTableRows] = useState(false); // NEW: toggle for table scroll
 
   const [chartOptions, setChartOptions] = useState({
     title: 'Data Visualization',
@@ -157,6 +158,33 @@ const ChartGenerator = () => {
     
     pdf.addImage(imgData, 'PNG', 10, 10, 180, 180 * ratio);
     pdf.save('chart.pdf');
+  };
+
+  // Handler to upload a new CSV file (reset state and open file dialog)
+  const handleUploadNewCSV = () => {
+    setData([]);
+    setHeaders([]);
+    setChartType('bar');
+    setShowTable(true);
+    setError(null);
+    setIsLoading(false);
+    setChartWidth(700);
+    setChartHeight(400);
+    setLimitChartRows(true);
+    setChartOptions({
+      title: 'Data Visualization',
+      xAxisLabel: 'X Axis',
+      yAxisLabel: 'Y Axis',
+      colors: colorPalettes,
+      showLegend: true,
+      showGrid: true
+    });
+    setSelectedX('');
+    setSelectedY('');
+    setSelectedPieValue('');
+    setShowAllTableRows(false);
+    // Open file dialog
+    document.getElementById('csv-upload-input').click();
   };
 
   // Limit chart data for performance, unless disabled
@@ -272,8 +300,30 @@ const ChartGenerator = () => {
             >
               Export PDF
             </Button>
+            {data.length > 0 && (
+              <Button
+                color="inherit"
+                onClick={handleUploadNewCSV}
+                sx={{ textTransform: 'none', fontWeight: 500, ml: 2 }}
+              >
+                Upload New CSV
+              </Button>
+            )}
           </Toolbar>
         </AppBar>
+
+        <input
+          id="csv-upload-input"
+          type="file"
+          accept=".csv"
+          style={{ display: 'none' }}
+          onChange={e => {
+            if (e.target.files && e.target.files.length > 0) {
+              onDropAccepted([e.target.files[0]]);
+              e.target.value = '';
+            }
+          }}
+        />
 
         <Container maxWidth="xl" sx={{ mt: 4 }}>
           <Grid container spacing={3}>
@@ -300,13 +350,11 @@ const ChartGenerator = () => {
                       </Alert>
                     )}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      {/* Pie chart with horizontal legend */}
                       {chartType === 'pie' ? (
                         <>
                           <Box>
                             {chartComponents[chartType]}
                           </Box>
-                          {/* Move only the legend items inside the scrollable container */}
                           <Box
                             className="pie-horizontal-legend"
                             sx={{
@@ -366,10 +414,28 @@ const ChartGenerator = () => {
                     </Box>
                   </Paper>
                   {showTable && (
-                    <Paper elevation={3} className="data-table" sx={{ p: 2, maxHeight: 400, overflow: 'auto', mt: 2 }}>
-                      <Typography variant="h6" gutterBottom>
-                        Data Preview (First 50 Rows)
-                      </Typography>
+                    <Paper elevation={3} className="data-table" sx={{
+                      p: 2,
+                      maxHeight: showAllTableRows ? 600 : 400,
+                      overflow: 'auto',
+                      mt: 2
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="h6" gutterBottom>
+                          Data Preview {showAllTableRows ? `(All ${data.length} Rows)` : '(First 50 Rows)'}
+                        </Typography>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={showAllTableRows}
+                              onChange={e => setShowAllTableRows(e.target.checked)}
+                              color="primary"
+                            />
+                          }
+                          label="Show All Rows"
+                          sx={{ ml: 2 }}
+                        />
+                      </Box>
                       <TableContainer>
                         <Table size="small" stickyHeader>
                           <TableHead>
@@ -382,7 +448,7 @@ const ChartGenerator = () => {
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {data.slice(0, 50).map((row, idx) => (
+                            {(showAllTableRows ? data : data.slice(0, 50)).map((row, idx) => (
                               <TableRow key={idx} hover>
                                 {headers.map((header) => (
                                   <TableCell key={header}>{row[header] ?? 'N/A'}</TableCell>
@@ -426,6 +492,7 @@ const ChartGenerator = () => {
                     color="primary"
                     startIcon={<CloudUpload />}
                     sx={{ fontWeight: 500, textTransform: 'none', mt: 3 }}
+                    onClick={() => document.getElementById('csv-upload-input').click()}
                   >
                     Upload CSV File
                   </Button>
@@ -435,9 +502,7 @@ const ChartGenerator = () => {
             {/* Controls Sidebar on the right */}
             <Grid item xs={12} md={4}>
               <Paper elevation={3} sx={{ p: 2, background: '#fff', minWidth: 320, maxWidth: 400 }}>
-
                 <div style={{ height: 0, overflow: 'hidden' }}>
-                
                   <input {...getInputProps()} />
                 </div>
                 {data.length > 0 && (
@@ -456,7 +521,6 @@ const ChartGenerator = () => {
                         ))}
                       </Select>
                     </FormControl>
-                    {/* Chart Size Slider */}
                     <Box sx={{ mt: 2 }}>
                       <Typography gutterBottom>Chart Width</Typography>
                       <Slider
@@ -476,7 +540,6 @@ const ChartGenerator = () => {
                         valueLabelDisplay="auto"
                       />
                     </Box>
-                    {/* X/Y/Pie selectors depending on chart type */}
                     {(chartType === 'bar' || chartType === 'line' || chartType === 'area' || chartType === 'scatter') && (
                       <>
                         <FormControl fullWidth sx={{ mt: 2 }}>
@@ -537,7 +600,6 @@ const ChartGenerator = () => {
                       label="Show Data Table"
                       sx={{ mt: 2 }}
                     />
-                    {/* NEW: Toggle for limiting chart rows */}
                     <FormControlLabel
                       control={
                         <Switch
