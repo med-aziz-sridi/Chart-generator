@@ -19,17 +19,19 @@ import jsPDF from 'jspdf';
 // Microsoft theme with responsive typography
 const microsoftTheme = createTheme({
   palette: {
-    primary: { main: '#0078D4' },
-    secondary: { main: '#2B88D8' },
-    background: { default: '#F3F2F1', paper: '#fff' },
-    text: { primary: '#323130', secondary: '#605E5C' }
+    primary: { main: '#2563eb' }, // More modern blue
+    secondary: { main: '#6366f1' },
+    background: { default: '#f8fafc', paper: '#fff' },
+    text: { primary: '#1e293b', secondary: '#64748b' }
   },
+  shape: { borderRadius: 12 },
   typography: {
     fontFamily: 'Segoe UI, Arial, sans-serif',
-    h6: { fontSize: '1.25rem', '@media (min-width:600px)': { fontSize: '1.5rem' } }
+    h6: { fontWeight: 700, fontSize: '1.35rem' }
   },
   components: {
-    MuiButton: { styleOverrides: { root: { borderRadius: 2 } } }
+    MuiButton: { styleOverrides: { root: { borderRadius: 8, fontWeight: 600 } } },
+    MuiPaper: { styleOverrides: { root: { borderRadius: 16 } } }
   }
 });
 
@@ -134,7 +136,7 @@ const ChartGenerator = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDropAccepted,
     onDropRejected,
-    accept: '.csv',
+    accept: { 'text/csv': ['.csv'] }, // modern accept syntax
     multiple: false,
     validator: (file) => {
       if (!file.name.endsWith('.csv')) {
@@ -282,13 +284,18 @@ const ChartGenerator = () => {
     )
   }), [chartData, headers, chartOptions, chartWidth, chartHeight, selectedX, selectedY, selectedPieValue]);
 
+  // Set the page title
+  useEffect(() => {
+    document.title = "CSV Chart Generator";
+  }, []);
+
   return (
     <ThemeProvider theme={microsoftTheme}>
       <CssBaseline />
-      <div className="App">
-        <AppBar position="static" color="primary" elevation={1}>
+      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)' }}>
+        <AppBar position="static" color="primary" elevation={2} sx={{ borderRadius: 0, mb: 2 }}>
           <Toolbar>
-            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 800, letterSpacing: 1 }}>
               CSV Chart Generator
             </Typography>
             <Button
@@ -296,7 +303,13 @@ const ChartGenerator = () => {
               startIcon={<Download />}
               onClick={exportAsImage}
               disabled={!data.length}
-              sx={{ textTransform: 'none', fontWeight: 500 }}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2,
+                transition: 'background 0.2s',
+                '&:hover': { background: '#1d4ed8' }
+              }}
             >
               Export PDF
             </Button>
@@ -304,7 +317,14 @@ const ChartGenerator = () => {
               <Button
                 color="inherit"
                 onClick={handleUploadNewCSV}
-                sx={{ textTransform: 'none', fontWeight: 500, ml: 2 }}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  ml: 2,
+                  borderRadius: 2,
+                  transition: 'background 0.2s',
+                  '&:hover': { background: '#1e293b', color: '#fff' }
+                }}
               >
                 Upload New CSV
               </Button>
@@ -325,34 +345,47 @@ const ChartGenerator = () => {
           }}
         />
 
-        <Container maxWidth="xl" sx={{ mt: 4 }}>
-          <Grid container spacing={3}>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4, minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Grid container spacing={4} sx={{ flex: 1, justifyContent: 'center' }}>
             {/* Main content: chart and table stacked vertically */}
             <Grid item xs={12} md={8}>
               {isLoading ? (
-                <Paper elevation={3} sx={{ p: 4, textAlign: 'center', background: '#fff' }}>
-                  <CircularProgress size={60} thickness={4} sx={{ color: '#0078D4' }} />
-                  <Typography variant="h6" sx={{ mt: 2 }}>
+                <Paper elevation={4} sx={{
+                  p: 6, textAlign: 'center', background: '#fff',
+                  borderRadius: 4, minHeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <CircularProgress size={64} thickness={4} sx={{ color: '#2563eb' }} />
+                  <Typography variant="h6" sx={{ mt: 3, color: '#2563eb', fontWeight: 700 }}>
                     Processing CSV File...
                   </Typography>
                 </Paper>
               ) : data.length > 0 ? (
                 <>
-                  <Paper elevation={3} className="chart-container" sx={{
-                    p: 2, mb: 4, background: '#fff', borderRadius: 3, boxShadow: 2, minHeight: 400
+                  <Paper elevation={4} className="chart-container" sx={{
+                    p: 3,
+                    mb: 4,
+                    background: '#fff',
+                    borderRadius: 4,
+                    boxShadow: 3,
+                    minHeight: 400,
+                    transition: 'box-shadow 0.2s',
+                    '&:hover': { boxShadow: 6 },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center', // n7eb el chart tji fel was6 mta3 el paper
                   }}>
-                    <Typography variant="h6" align="center" gutterBottom>
+                    <Typography variant="h6" align="center" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
                       {chartOptions.title}
                     </Typography>
                     {limitChartRows && data.length > 100 && (
-                      <Alert severity="warning" sx={{ mb: 2 }}>
+                      <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
                         Showing only the first 100 rows for performance.
                       </Alert>
                     )}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       {chartType === 'pie' ? (
                         <>
-                          <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                             {chartComponents[chartType]}
                           </Box>
                           <Box
@@ -365,10 +398,11 @@ const ChartGenerator = () => {
                               whiteSpace: 'nowrap',
                               display: 'flex',
                               alignItems: 'center',
-                              borderRadius: 1,
-                              border: '1px solid #eee',
+                              borderRadius: 2,
+                              border: '1px solid #e5e7eb',
                               p: 1,
-                              background: '#fafbfc'
+                              background: '#f1f5f9',
+                              mx: 'auto'
                             }}
                           >
                             {chartData.map((entry, idx) => (
@@ -384,12 +418,12 @@ const ChartGenerator = () => {
                                 <span
                                   style={{
                                     display: 'inline-block',
-                                    width: 16,
-                                    height: 16,
-                                    borderRadius: 4,
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 6,
                                     background: colorPalettes[idx % colorPalettes.length],
                                     marginRight: 8,
-                                    border: '1px solid #ccc'
+                                    border: '1px solid #cbd5e1'
                                   }}
                                 />
                                 <Typography
@@ -409,7 +443,9 @@ const ChartGenerator = () => {
                           </Box>
                         </>
                       ) : (
-                        chartComponents[chartType]
+                        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                          {chartComponents[chartType]}
+                        </Box>
                       )}
                     </Box>
                   </Paper>
@@ -418,10 +454,13 @@ const ChartGenerator = () => {
                       p: 2,
                       maxHeight: showAllTableRows ? 600 : 400,
                       overflow: 'auto',
-                      mt: 2
+                      mt: 2,
+                      borderRadius: 3,
+                      boxShadow: 2,
+                      background: '#f9fafb'
                     }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="h6" gutterBottom>
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 700 }}>
                           Data Preview {showAllTableRows ? `(All ${data.length} Rows)` : '(First 50 Rows)'}
                         </Typography>
                         <FormControlLabel
@@ -441,7 +480,7 @@ const ChartGenerator = () => {
                           <TableHead>
                             <TableRow>
                               {headers.map((header) => (
-                                <TableCell key={header} sx={{ fontWeight: 600, background: '#F3F2F1' }}>
+                                <TableCell key={header} sx={{ fontWeight: 700, background: '#e0e7ef', color: '#1e293b' }}>
                                   {header}
                                 </TableCell>
                               ))}
@@ -469,29 +508,44 @@ const ChartGenerator = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: '60vh',
-                    border: '2px dashed #b0b0b0',
-                    borderRadius: 2,
-                    background: '#fafbfc',
+                    minHeight: { xs: '60vh', md: '60vh' },
+                    height: '100%',
+                    border: isDragActive ? '2.5px solid #2563eb' : '2.5px dashed #cbd5e1',
+                    borderRadius: 4,
+                    background: isDragActive ? '#e0e7ef' : '#f1f5f9',
                     cursor: 'pointer',
                     transition: 'border 0.2s, background 0.2s',
                     textAlign: 'center',
+                    boxShadow: isDragActive ? 6 : 2,
+                    p: 4,
+                    flex: 1,
+                    mx: 'auto', // horizontally center
+                    maxWidth: 500 // optional: limit width for better centering
                   }}
                   className="dropzone"
                 >
                   <input {...getInputProps()} />
-                  <CloudUpload style={{ fontSize: 64, color: '#0078D4' }} />
-                  <Typography variant="h6" sx={{ mt: 2 }}>
+                  <CloudUpload style={{ fontSize: 72, color: '#2563eb', marginBottom: 16 }} />
+                  <Typography variant="h6" sx={{ mt: 2, fontWeight: 700 }}>
                     Drag & Drop CSV File or Click to Upload
                   </Typography>
                   <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                    Supported format: .csv with header row
+                    Supported format: <b>.csv</b> with header row
                   </Typography>
                   <Button
                     variant="contained"
                     color="primary"
                     startIcon={<CloudUpload />}
-                    sx={{ fontWeight: 500, textTransform: 'none', mt: 3 }}
+                    sx={{
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      mt: 4,
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1.5,
+                      fontSize: '1rem',
+                      boxShadow: 2
+                    }}
                     onClick={() => document.getElementById('csv-upload-input').click()}
                   >
                     Upload CSV File
@@ -500,8 +554,18 @@ const ChartGenerator = () => {
               )}
             </Grid>
             {/* Controls Sidebar on the right */}
-            <Grid item xs={12} md={4}>
-              <Paper elevation={3} sx={{ p: 2, background: '#fff', minWidth: 320, maxWidth: 400 }}>
+            {/* <Grid item xs={12} md={4}>
+              <Paper elevation={4} sx={{
+                p: 3,
+                background: '#fff',
+                minWidth: 320,
+                maxWidth: 400,
+                borderRadius: 4,
+                boxShadow: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2
+              }}>
                 <div style={{ height: 0, overflow: 'hidden' }}>
                   <input {...getInputProps()} />
                 </div>
@@ -513,6 +577,9 @@ const ChartGenerator = () => {
                         value={chartType}
                         onChange={(e) => setChartType(e.target.value)}
                         label="Chart Type"
+                        MenuProps={{
+                          PaperProps: { sx: { borderRadius: 2 } }
+                        }}
                       >
                         {['bar', 'line', 'pie', 'area', 'scatter'].map((type) => (
                           <MenuItem key={type} value={type}>
@@ -522,7 +589,7 @@ const ChartGenerator = () => {
                       </Select>
                     </FormControl>
                     <Box sx={{ mt: 2 }}>
-                      <Typography gutterBottom>Chart Width</Typography>
+                      <Typography gutterBottom fontWeight={600}>Chart Width</Typography>
                       <Slider
                         min={400}
                         max={1200}
@@ -531,7 +598,7 @@ const ChartGenerator = () => {
                         valueLabelDisplay="auto"
                         sx={{ mb: 1 }}
                       />
-                      <Typography gutterBottom>Chart Height</Typography>
+                      <Typography gutterBottom fontWeight={600}>Chart Height</Typography>
                       <Slider
                         min={300}
                         max={800}
@@ -548,6 +615,9 @@ const ChartGenerator = () => {
                             value={selectedX}
                             onChange={(e) => setSelectedX(e.target.value)}
                             label="X Axis"
+                            MenuProps={{
+                              PaperProps: { sx: { borderRadius: 2 } }
+                            }}
                           >
                             {headers.map((header) => (
                               <MenuItem key={header} value={header}>{header}</MenuItem>
@@ -560,6 +630,9 @@ const ChartGenerator = () => {
                             value={selectedY}
                             onChange={(e) => setSelectedY(e.target.value)}
                             label="Y Axis"
+                            MenuProps={{
+                              PaperProps: { sx: { borderRadius: 2 } }
+                            }}
                           >
                             {headers.map((header) => (
                               <MenuItem key={header} value={header}>{header}</MenuItem>
@@ -575,6 +648,9 @@ const ChartGenerator = () => {
                           value={selectedPieValue}
                           onChange={(e) => setSelectedPieValue(e.target.value)}
                           label="Pie Value"
+                          MenuProps={{
+                            PaperProps: { sx: { borderRadius: 2 } }
+                          }}
                         >
                           {headers.map((header) => (
                             <MenuItem key={header} value={header}>{header}</MenuItem>
@@ -588,6 +664,7 @@ const ChartGenerator = () => {
                       onChange={(e) => setChartOptions(prev => ({ ...prev, title: e.target.value }))}
                       fullWidth
                       sx={{ mt: 2 }}
+                      inputProps={{ maxLength: 60 }}
                     />
                     <FormControlLabel
                       control={
@@ -614,15 +691,15 @@ const ChartGenerator = () => {
                   </>
                 )}
               </Paper>
-            </Grid>
+            </Grid> */}
           </Grid>
         </Container>
         <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-          <Alert severity="error" sx={{ width: '100%' }}>
+          <Alert severity="error" sx={{ width: '100%', borderRadius: 2 }}>
             {error}
           </Alert>
         </Snackbar>
-      </div>
+      </Box>
     </ThemeProvider>
   );
 };
