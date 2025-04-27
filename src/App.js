@@ -16,7 +16,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-
+// Microsoft theme with responsive typography
 const microsoftTheme = createTheme({
   palette: {
     primary: { main: '#0078D4' },
@@ -71,7 +71,8 @@ const ChartGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [chartWidth, setChartWidth] = useState(700);
   const [chartHeight, setChartHeight] = useState(400);
-  
+  const [limitChartRows, setLimitChartRows] = useState(true); // NEW: toggle for row limit
+
   const [chartOptions, setChartOptions] = useState({
     title: 'Data Visualization',
     xAxisLabel: 'X Axis',
@@ -158,8 +159,11 @@ const ChartGenerator = () => {
     pdf.save('chart.pdf');
   };
 
-  // Limit chart data for performance
-  const chartData = useMemo(() => data.slice(0, 100), [data]);
+  // Limit chart data for performance, unless disabled
+  const chartData = useMemo(
+    () => (limitChartRows ? data.slice(0, 100) : data),
+    [data, limitChartRows]
+  );
 
   const chartComponents = useMemo(() => ({
     bar: (
@@ -212,7 +216,6 @@ const ChartGenerator = () => {
           ))}
         </Pie>
         <Tooltip />
-        {chartOptions.showLegend && <Legend />}
       </PieChart>
     ),
     area: (
@@ -291,13 +294,75 @@ const ChartGenerator = () => {
                     <Typography variant="h6" align="center" gutterBottom>
                       {chartOptions.title}
                     </Typography>
-                    {data.length > 100 && (
+                    {limitChartRows && data.length > 100 && (
                       <Alert severity="warning" sx={{ mb: 2 }}>
                         Showing only the first 100 rows for performance.
                       </Alert>
                     )}
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                      {chartComponents[chartType]}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      {/* Pie chart with horizontal legend */}
+                      {chartType === 'pie' ? (
+                        <>
+                          <Box>
+                            {chartComponents[chartType]}
+                          </Box>
+                          {/* Move only the legend items inside the scrollable container */}
+                          <Box
+                            className="pie-horizontal-legend"
+                            sx={{
+                              mt: 2,
+                              width: '100%',
+                              maxWidth: 600,
+                              overflowX: 'auto',
+                              whiteSpace: 'nowrap',
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 1,
+                              border: '1px solid #eee',
+                              p: 1,
+                              background: '#fafbfc'
+                            }}
+                          >
+                            {chartData.map((entry, idx) => (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  mr: 3,
+                                  minWidth: 0
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    width: 16,
+                                    height: 16,
+                                    borderRadius: 4,
+                                    background: colorPalettes[idx % colorPalettes.length],
+                                    marginRight: 8,
+                                    border: '1px solid #ccc'
+                                  }}
+                                />
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    maxWidth: 120,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                  title={entry[headers[0]]}
+                                >
+                                  {String(entry[headers[0]])}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        </>
+                      ) : (
+                        chartComponents[chartType]
+                      )}
                     </Box>
                   </Paper>
                   {showTable && (
@@ -331,7 +396,24 @@ const ChartGenerator = () => {
                   )}
                 </>
               ) : (
-                <Paper elevation={3} sx={{ p: 4, textAlign: 'center', background: '#fff' }}>
+                <Box
+                  {...getRootProps()}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '60vh',
+                    border: '2px dashed #b0b0b0',
+                    borderRadius: 2,
+                    background: '#fafbfc',
+                    cursor: 'pointer',
+                    transition: 'border 0.2s, background 0.2s',
+                    textAlign: 'center',
+                  }}
+                  className="dropzone"
+                >
+                  <input {...getInputProps()} />
                   <CloudUpload style={{ fontSize: 64, color: '#0078D4' }} />
                   <Typography variant="h6" sx={{ mt: 2 }}>
                     Drag & Drop CSV File or Click to Upload
@@ -339,23 +421,24 @@ const ChartGenerator = () => {
                   <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
                     Supported format: .csv with header row
                   </Typography>
-                </Paper>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<CloudUpload />}
+                    sx={{ fontWeight: 500, textTransform: 'none', mt: 3 }}
+                  >
+                    Upload CSV File
+                  </Button>
+                </Box>
               )}
             </Grid>
             {/* Controls Sidebar on the right */}
             <Grid item xs={12} md={4}>
               <Paper elevation={3} sx={{ p: 2, background: '#fff', minWidth: 320, maxWidth: 400 }}>
-                <div {...getRootProps()} style={{ cursor: 'pointer' }}>
+
+                <div style={{ height: 0, overflow: 'hidden' }}>
+                
                   <input {...getInputProps()} />
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    startIcon={<CloudUpload />}
-                    sx={{ fontWeight: 500, textTransform: 'none' }}
-                  >
-                    {isDragActive ? 'Drop CSV Here' : 'Upload CSV File'}
-                  </Button>
                 </div>
                 {data.length > 0 && (
                   <>
@@ -454,6 +537,18 @@ const ChartGenerator = () => {
                       label="Show Data Table"
                       sx={{ mt: 2 }}
                     />
+                    {/* NEW: Toggle for limiting chart rows */}
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={limitChartRows}
+                          onChange={(e) => setLimitChartRows(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label="Limit Chart to 100 Rows"
+                      sx={{ mt: 1 }}
+                    />
                   </>
                 )}
               </Paper>
@@ -469,5 +564,5 @@ const ChartGenerator = () => {
     </ThemeProvider>
   );
 };
-  
+
 export default ChartGenerator;
