@@ -554,22 +554,22 @@ const ChartGenerator = () => {
               )}
             </Grid>
             {/* Controls Sidebar on the right */}
-            {/* <Grid item xs={12} md={4}>
-              <Paper elevation={4} sx={{
-                p: 3,
-                background: '#fff',
-                minWidth: 320,
-                maxWidth: 400,
-                borderRadius: 4,
-                boxShadow: 3,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2
-              }}>
-                <div style={{ height: 0, overflow: 'hidden' }}>
-                  <input {...getInputProps()} />
-                </div>
-                {data.length > 0 && (
+            {data.length > 0 && (
+              <Grid item xs={12} md={4}>
+                <Paper elevation={4} sx={{
+                  p: 3,
+                  background: '#fff',
+                  minWidth: 320,
+                  maxWidth: 400,
+                  borderRadius: 4,
+                  boxShadow: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2
+                }}>
+                  <div style={{ height: 0, overflow: 'hidden' }}>
+                    <input {...getInputProps()} />
+                  </div>
                   <>
                     <FormControl fullWidth sx={{ mt: 2 }}>
                       <InputLabel>Chart Type</InputLabel>
@@ -689,9 +689,9 @@ const ChartGenerator = () => {
                       sx={{ mt: 1 }}
                     />
                   </>
-                )}
-              </Paper>
-            </Grid> */}
+                </Paper>
+              </Grid>
+            )}
           </Grid>
         </Container>
         <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
