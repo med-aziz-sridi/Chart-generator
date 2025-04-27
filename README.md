@@ -26,10 +26,11 @@ Web app to visualize your CSV data as beautiful charts. Just upload your CSV fil
 
 - Fast CSV parsing and chart rendering
 - Modern, responsive UI (built with Material UI)
-- Supports large files (shows first 100 rows for performance)
-- Data table preview with option to show all rows
+- Supports large files (option to show only the first 100 rows for performance)
+- Data table preview with option to show all rows ( or the first 50 for performance)
+- resizable charts ( you can make your chart as big as you want ) 
 - Export charts as PDF
-- No backend required – all processing is in your browser
+
 
 ## Development
 
@@ -51,4 +52,4 @@ Web app to visualize your CSV data as beautiful charts. Just upload your CSV fil
 
 ---
 
-Made with ❤️ for quick data exploration.
+Made with hate <3 by 666 
